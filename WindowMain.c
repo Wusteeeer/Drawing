@@ -11,13 +11,7 @@
 
 static uint32_t pixels[WIDTH*HEIGHT];
 static Brush *brush;
-
-#define ABGRTORGBA(abgr) \
-    (((abgr&0x000000FF)<<24)|((abgr&0x0000FF00)<<8)|((abgr&0x00FF0000)>>8)|((abgr&0xFF000000)>>24))
-
-#define RGBATOARGB(rgba) \
-    (((rgba&0xFF000000)>>8)|((rgba&0x00FF0000)>>8)|((rgba&0x0000FF00)>>8)|((rgba&0x000000FF)<<24))
-
+ 
 /*---------------------------------------
 
     Pallette from lospec 
@@ -25,11 +19,11 @@ static Brush *brush;
 
 ---------------------------------------*/
 
-#define PALETTE1 0x00C5BDE5
-#define PALETTE2 0x00968FCC
-#define PALETTE3 0x005760C7
-#define PALETTE4 0x00263997
-#define PALETTE5 0x0013234E
+#define PALETTE1 0xFFC5BDE5
+#define PALETTE2 0xFF968FCC
+#define PALETTE3 0xFF5760C7
+#define PALETTE4 0xFF263997
+#define PALETTE5 0xFF13234E
 
 
 /*---------------------------------------
@@ -57,7 +51,6 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, 
                    PSTR szCmdLine, int iCmdShow)
 {
-
     static TCHAR szAppName[] = TEXT("Hello");
     HWND hwnd;
     MSG msg;
@@ -79,17 +72,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         return 0;
     }
 
-    brush = createBrush(BT_SQUARE, 50, PALETTE1);
+    brush = createBrush(BT_CIRCLE, 50, BLUE);
 
     hwnd = CreateWindow(szAppName, TEXT("Hello World"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, WIDTH, HEIGHT, NULL, NULL, hInstance, NULL);
     ShowWindow(hwnd, iCmdShow);
     UpdateWindow(hwnd);
 
-    //Set background
     for(int i = 0; i < HEIGHT; i++){
         for(int j = 0; j < WIDTH; j++){
             
-            pixels[i * WIDTH + j] = BACKGROUND;
+            pixels[i * WIDTH + j] = GREEN;
         }
     }
 
@@ -97,6 +89,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
        
         TranslateMessage(&msg);
         DispatchMessage(&msg);
+     
     }
 
     destroyBrush(brush);
