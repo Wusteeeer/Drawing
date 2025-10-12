@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include "math.h"
 #include "stdint.h" 
+#include "stdbool.h"
 #include "brush.h"
+#include "button.h"
 
 #define WIDTH 700
 #define HEIGHT 500

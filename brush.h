@@ -65,6 +65,8 @@ typedef struct brush Brush;
 Brush *createBrush(U_BYTE brushType, int brushSize, COLOR color);
 void destroyBrush(Brush *brush);
 
+COLOR lerpColor(COLOR c1, COLOR c2, float t);
+
 void draw(COLOR *screen, Brush *brush, int x, int y, int screenSizeX, int screenSizeY);
 void changeColor(Brush *brush, COLOR newColor);
 

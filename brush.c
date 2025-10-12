@@ -57,6 +57,21 @@ void changeColor(Brush *brush, COLOR newColor){
 }
 
 
+static float lerp(float v0, float v1, float t) {
+  return (1 - t) * v0 + t * v1;
+}
+
+static float map(long x, long in_min, long in_max, long out_min, long out_max)
+{
+  return (float)((x - in_min) * (out_max - out_min)) / (float)((in_max - in_min) + out_min);
+}
+
+COLOR lerpColor(COLOR c1, COLOR c2, float a){
+    float newRed = lerp((float)REDCHANNEL(c1), (float)REDCHANNEL(c2), a);
+    float newGreen = lerp((float)GREENCHANNEL(c1), (float)GREENCHANNEL(c2), a);
+    float newBlue = lerp((float)BLUECHANNEL(c1), (float)BLUECHANNEL(c2), a);
+    return ((int)newBlue)|((int)newGreen<<8)|((int)newRed<<16)|((int)map(a, 0, 1, 0, 255)<<24);
+}
 
 //TODO: Handle transparency and then allow for exporting image as bitmap
 void draw(COLOR *screen, Brush *brush, int x, int y, int screenSizeX, int screenSizeY){
@@ -72,18 +87,10 @@ void draw(COLOR *screen, Brush *brush, int x, int y, int screenSizeX, int screen
             COLOR brushColor = ARGBTORGBA(brush->brushLayout[((i*brush->brushSize)+j)]);
             COLOR screenColor = ARGBTORGBA(screen[((i*screenSizeX)+j)+offset]); 
 
-            // int alpha1 = (brushColor&0x000000FF);
-            // int alpha2 = (screenColor&0x000000FF);
-    
-            // float newAlpha = alpha1 + alpha2*(1-alpha1);
-            // COLOR newColor = (COLOR)(brushColor*alpha1+screenColor*alpha2*(1-alpha1)/newAlpha);
+            int alpha = (brushColor&0x000000FF);            
+            float mappedAlpha = map(alpha, 0, 255, 0, 1);
             
-            //TODO: Interpolate from screen color to brush color based on alpha channel
-            printf("%d, %d, %d, %d\n", REDCHANNEL(brushColor), GREENCHANNEL(brushColor), BLUECHANNEL(brushColor), ALPHACHANNEL(brushColor));
-            printf("%d, %d, %d, %d\n", REDCHANNEL(screenColor), GREENCHANNEL(screenColor), BLUECHANNEL(screenColor), ALPHACHANNEL(screenColor));
-            printf("\n");
-
-            screen[((i*screenSizeX)+j)+offset] = RGBATOARGB(brushColor);
+            screen[((i*screenSizeX)+j)+offset] = lerpColor(screenColor, brushColor, mappedAlpha);
         }
     }
 
