@@ -16,7 +16,7 @@ typedef struct ui_button UIButton;
 UIButton *createButton(int x, int y, int width, int height, void *onClick, COLOR color, U_BYTE zOrder);
 void destroyButton(UIButton *btn);
 
-void drawButton(UIButton *btn, Screen *sc, int screenWidth, int screenHeight);
+void drawButton(UIButton *btn, Screen *sc, int screenWidth, int screenHeight, int cornerRadius);
 
 /*@brief If click is true and pointer is hovering over button onClick is called*/
 void checkButton(UIButton *btn, bool click, int mouseX, int mouseY);

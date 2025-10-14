@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "stdbool.h"
 #include "button.h"
 
@@ -23,13 +24,21 @@ UIButton *createButton(int x, int y, int width, int height, void *onClick, COLOR
     return btn;
 }
 
-void drawButton(UIButton *btn, Screen *sc, int screenWidth, int screenHeight){
-    
+void drawButton(UIButton *btn, Screen *sc, int screenWidth, int screenHeight, int cornerRadius){
+
     for(int h = 0; h < btn->height; h++){
         if(btn->y + h > screenHeight) continue;
         for(int w = 0; w < btn->width; w++){
             if(btn->x+w > screenWidth) continue;
-            
+                        
+            if(btn->x+w >= btn->x+btn->width-cornerRadius || btn->x+w <= cornerRadius+btn->x){
+                int xPos = btn->x+w <= cornerRadius+btn->x ? (cornerRadius+btn->x) : (btn->x+btn->width-cornerRadius);
+                int yPos = (btn->height/2)+btn->y;
+                                
+                float distance = sqrt((float)(btn->x+w-xPos)*(float)(btn->x+w-xPos)+(float)(btn->y+h-yPos)*(float)(btn->y+h-yPos));
+                if(abs(distance) > btn->height/2) continue;
+       
+            }
             setPixelColor(sc, btn->x+w, btn->y+h, btn->color);
             setPixelZOrder(sc, btn->x+w, btn->y+h, btn->zOrder);
         }

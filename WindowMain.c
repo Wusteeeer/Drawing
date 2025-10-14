@@ -7,8 +7,8 @@
 #include "brush.h"
 #include "button.h"
 
-#define WIDTH 700
-#define HEIGHT 500
+#define WIDTH 800
+#define HEIGHT 600
 
 #define PIXELCOLS 32
 #define PIXELROWS 32
@@ -64,8 +64,8 @@ void cleanupEnv(){
 void initializeEnv(){
     sc = createScreen(WIDTH, HEIGHT, BACKGROUND);
     brush = createBrush(BT_CIRCLE, 50, PALETTE1, 0);
-    exportButton = createButton((WIDTH/2)-50, (HEIGHT/2)-25, 100, 50, exportDrawing, BLUE, 1);
-    drawButton(exportButton, sc, WIDTH, HEIGHT);
+    exportButton = createButton(10, 10, WIDTH-20, 20, exportDrawing, BLUE, 1);
+    drawButton(exportButton, sc, WIDTH, HEIGHT, 10);
 }
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -97,7 +97,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     initializeEnv();
 
-    hwnd = CreateWindow(szAppName, TEXT("Hello World"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, WIDTH, HEIGHT, NULL, NULL, hInstance, NULL);
+    hwnd = CreateWindow(szAppName, TEXT("Hello World"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, WIDTH+15, HEIGHT+15, NULL, NULL, hInstance, NULL);
     ShowWindow(hwnd, iCmdShow);
     UpdateWindow(hwnd);
 
