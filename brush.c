@@ -4,9 +4,11 @@
 #include "brush.h"
 
 
+
 typedef struct brush{
     int brushSize;
     COLOR *brushLayout;
+    U_BYTE zOrder;
 }Brush;
 
 static void generateBrush(Brush *br, U_BYTE brushType, COLOR color){
@@ -36,10 +38,11 @@ static void generateBrush(Brush *br, U_BYTE brushType, COLOR color){
 
 }
 
-Brush *createBrush(U_BYTE brushType, int brushSize, COLOR color){
+Brush *createBrush(U_BYTE brushType, int brushSize, COLOR color, U_BYTE zOrder){
     Brush *br = malloc(sizeof(Brush));
     br->brushSize=brushSize;
     br->brushLayout = malloc(sizeof(COLOR)*brushSize*brushSize);
+    br->zOrder = zOrder;
 
     generateBrush(br, brushType, color);
 
@@ -73,23 +76,23 @@ COLOR lerpColor(COLOR c1, COLOR c2, float a){
     return ((int)newBlue)|((int)newGreen<<8)|((int)newRed<<16)|((int)map(a, 0, 1, 0, 255)<<24);
 }
 
-void draw(COLOR *screen, Brush *brush, int x, int y, int screenSizeX, int screenSizeY){
-
-    int offset = (((y-brush->brushSize/2)*screenSizeX)+(x-brush->brushSize/2));
+void draw(Screen *sc, Brush *brush, int x, int y, int screenSizeX, int screenSizeY){
     
-
     for(int i = 0; i < brush->brushSize; i++){
         for(int j = 0; j < brush->brushSize; j++){
-            if(((i*screenSizeX)+j)+offset > screenSizeX*screenSizeY) continue;
+            int scX = (x-brush->brushSize/2)+j;
+            int scY = (y-brush->brushSize/2)+i;
+            if(scX >= screenSizeX || scY >= screenSizeY) continue;
             if(brush->brushLayout[((i*brush->brushSize)+j)] == TRANSPARENT) continue;
+            if(getPixelZOrder(sc, scX, scY) > brush->zOrder) continue;
+ 
+            COLOR brushColor = brush->brushLayout[((i*brush->brushSize)+j)];
+            COLOR screenColor = getPixelColor(sc, scX, scY); 
 
-            COLOR brushColor = ARGBTORGBA(brush->brushLayout[((i*brush->brushSize)+j)]);
-            COLOR screenColor = ARGBTORGBA(screen[((i*screenSizeX)+j)+offset]); 
-
-            int alpha = (brushColor&0x000000FF);            
+            int alpha = ALPHACHANNEL(brushColor);            
             float mappedAlpha = map(alpha, 0, 255, 0, 1);
             
-            screen[((i*screenSizeX)+j)+offset] = lerpColor(screenColor, brushColor, mappedAlpha);
+            setPixelColor(sc, scX, scY, alpha != 255 ? lerpColor(screenColor, brushColor, mappedAlpha) : brushColor);
         }
     }
 

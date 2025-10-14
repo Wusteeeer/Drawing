@@ -1,0 +1,19 @@
+#ifndef SCREEN_H
+#define SCREEN_H
+
+#include "c_util.h"
+
+typedef struct screen Screen;
+
+Screen *createScreen(int width, int height, COLOR bg);
+void destroyScreen(Screen *sc);
+
+void fillScreen(Screen *sc, COLOR color);
+COLOR getPixelColor(Screen *sc, int x, int y);
+COLOR *getPixels(Screen *sc);
+U_BYTE getPixelZOrder(Screen *sc, int x, int y);
+
+void setPixelColor(Screen *sc, int x, int y, COLOR color);
+void setPixelZOrder(Screen *sc, int x,  int y, U_BYTE z);
+
+#endif

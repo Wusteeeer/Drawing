@@ -2,6 +2,8 @@
 #include "math.h"
 #include "stdint.h" 
 #include "stdbool.h"
+#include "c_util.h"
+#include "screen.h"
 #include "brush.h"
 #include "button.h"
 
@@ -11,7 +13,8 @@
 #define PIXELCOLS 32
 #define PIXELROWS 32
 
-static uint32_t pixels[WIDTH*HEIGHT];
+
+static Screen *sc;
 static Brush *brush;
 static UIButton *exportButton;
  
@@ -52,11 +55,25 @@ void exportDrawing(){
     printf("Clicked button!\n");
 }
 
+void cleanupEnv(){
+    destroyBrush(brush);
+    destroyButton(exportButton);
+    destroyScreen(sc);
+}
+
+void initializeEnv(){
+    sc = createScreen(WIDTH, HEIGHT, BACKGROUND);
+    brush = createBrush(BT_CIRCLE, 50, PALETTE1, 0);
+    exportButton = createButton((WIDTH/2)-50, (HEIGHT/2)-25, 100, 50, exportDrawing, BLUE, 1);
+    drawButton(exportButton, sc, WIDTH, HEIGHT);
+}
+
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, 
                    PSTR szCmdLine, int iCmdShow)
 {
+
     static TCHAR szAppName[] = TEXT("Hello");
     HWND hwnd;
     MSG msg;
@@ -78,21 +95,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         return 0;
     }
 
-    brush = createBrush(BT_CIRCLE, 50, BLUE);
+    initializeEnv();
 
     hwnd = CreateWindow(szAppName, TEXT("Hello World"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, WIDTH, HEIGHT, NULL, NULL, hInstance, NULL);
     ShowWindow(hwnd, iCmdShow);
     UpdateWindow(hwnd);
 
-    for(int i = 0; i < HEIGHT; i++){
-        for(int j = 0; j < WIDTH; j++){
-            
-            pixels[i * WIDTH + j] = BACKGROUND;
-        }
-    }
-    
-    exportButton = createButton((WIDTH/2)-50, (HEIGHT/2)-25, 100, 50, exportDrawing, BLUE);
-    drawButton(exportButton, pixels, WIDTH, HEIGHT);
+
 
     while(GetMessage(&msg, NULL, 0, 0)){
     
@@ -102,11 +111,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
      
     }
 
-    destroyBrush(brush);
-    destroyButton(exportButton);
+    cleanupEnv();
     return msg.wParam;
 }
 
+static void checkButtons(WPARAM wParam, LPARAM lParam){
+    int mouseX = lParam&0xFFFF;
+    int mouseY = (lParam>>16)&0xFFFF;
+            
+    checkButton(exportButton, wParam == MK_LBUTTON, mouseX, mouseY);
+}
+
+static void drawAt(WPARAM wParam, LPARAM lParam){
+
+    if(wParam != MK_LBUTTON) return;
+    int mouseX = lParam&0xFFFF;
+    int mouseY = (lParam>>16)&0xFFFF;
+    
+    draw(sc, brush, mouseX, mouseY, WIDTH, HEIGHT);
+            
+}
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
     HDC hdc;
@@ -119,25 +143,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
             printf("Created!\n");
         return 0;
         case WM_LBUTTONDOWN:
-            mouseX = lParam&0xFFFF;
-            mouseY = (lParam>>16)&0xFFFF;
-            checkButton(exportButton, wParam == MK_LBUTTON, mouseX, mouseY);
-
+            checkButtons(wParam, lParam);
+            drawAt(wParam, lParam);   
         return 0;
         case WM_MOUSEMOVE:
-            if(wParam != MK_LBUTTON) return 0;
-            mouseX = lParam&0xFFFF;
-            mouseY = (lParam>>16)&0xFFFF;
-            
-            draw(pixels, brush, mouseX, mouseY, WIDTH, HEIGHT);
-            //pixels[mouseY*WIDTH+mouseX]=PALETTE1;
-
+            drawAt(wParam, lParam);
         case WM_PAINT:
                 
             hdc = GetDC(hwnd);
             HDC memdc = CreateCompatibleDC(hdc);
             HBITMAP hbitmap = CreateCompatibleBitmap(hdc, WIDTH, HEIGHT);
-            SetBitmapBits(hbitmap, WIDTH*HEIGHT*sizeof(uint32_t), pixels);
+            SetBitmapBits(hbitmap, WIDTH*HEIGHT*sizeof(uint32_t), getPixels(sc));
             SelectObject(memdc, hbitmap);
 
             BitBlt(hdc, 0, 0, WIDTH, HEIGHT, memdc, 0, 0, SRCCOPY);

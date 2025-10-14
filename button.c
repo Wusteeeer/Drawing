@@ -7,10 +7,11 @@ typedef struct ui_button{
     int x, y;
     int width, height;
     void (*onClick)();
-    uint32_t color;
+    COLOR color;
+    U_BYTE zOrder;
 }UIButton;
 
-UIButton *createButton(int x, int y, int width, int height, void *onClick, uint32_t color){
+UIButton *createButton(int x, int y, int width, int height, void *onClick, COLOR color, U_BYTE zOrder){
     UIButton *btn = malloc(sizeof(UIButton));
     btn->width = width;
     btn->height = height;
@@ -18,19 +19,19 @@ UIButton *createButton(int x, int y, int width, int height, void *onClick, uint3
     btn->y = y;
     btn->color = color;
     btn->onClick = onClick;
-
+    btn->zOrder = zOrder;
     return btn;
 }
 
-void drawButton(UIButton *btn, uint32_t *pixels, int screenWidth, int screenHeight){
+void drawButton(UIButton *btn, Screen *sc, int screenWidth, int screenHeight){
     
     for(int h = 0; h < btn->height; h++){
         if(btn->y + h > screenHeight) continue;
         for(int w = 0; w < btn->width; w++){
             if(btn->x+w > screenWidth) continue;
             
-            pixels[((btn->y+h)*screenWidth)+(btn->x+w)] = btn->color;            
-
+            setPixelColor(sc, btn->x+w, btn->y+h, btn->color);
+            setPixelZOrder(sc, btn->x+w, btn->y+h, btn->zOrder);
         }
     }
 
