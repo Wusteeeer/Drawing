@@ -73,7 +73,6 @@ COLOR lerpColor(COLOR c1, COLOR c2, float a){
     return ((int)newBlue)|((int)newGreen<<8)|((int)newRed<<16)|((int)map(a, 0, 1, 0, 255)<<24);
 }
 
-//TODO: Handle transparency and then allow for exporting image as bitmap
 void draw(COLOR *screen, Brush *brush, int x, int y, int screenSizeX, int screenSizeY){
 
     int offset = (((y-brush->brushSize/2)*screenSizeX)+(x-brush->brushSize/2));

@@ -13,6 +13,7 @@
 
 static uint32_t pixels[WIDTH*HEIGHT];
 static Brush *brush;
+static UIButton *exportButton;
  
 /*---------------------------------------
 
@@ -47,6 +48,9 @@ static Brush *brush;
 
 #include "windows.h"
 
+void exportDrawing(){
+    printf("Clicked button!\n");
+}
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -83,43 +87,53 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     for(int i = 0; i < HEIGHT; i++){
         for(int j = 0; j < WIDTH; j++){
             
-            pixels[i * WIDTH + j] = GREEN;
+            pixels[i * WIDTH + j] = BACKGROUND;
         }
     }
+    
+    exportButton = createButton((WIDTH/2)-50, (HEIGHT/2)-25, 100, 50, exportDrawing, BLUE);
+    drawButton(exportButton, pixels, WIDTH, HEIGHT);
 
     while(GetMessage(&msg, NULL, 0, 0)){
-       
+    
+
         TranslateMessage(&msg);
         DispatchMessage(&msg);
      
     }
 
     destroyBrush(brush);
-
+    destroyButton(exportButton);
     return msg.wParam;
 }
+
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
     HDC hdc;
     PAINTSTRUCT ps;
     RECT rect;
+    int mouseX=0, mouseY=0;
 
     switch(message){
         case WM_CREATE:
             printf("Created!\n");
         return 0;
+        case WM_LBUTTONDOWN:
+            mouseX = lParam&0xFFFF;
+            mouseY = (lParam>>16)&0xFFFF;
+            checkButton(exportButton, wParam == MK_LBUTTON, mouseX, mouseY);
+
+        return 0;
         case WM_MOUSEMOVE:
-            
             if(wParam != MK_LBUTTON) return 0;
-
-            int mouseX = lParam&0xFFFF;
-            int mouseY = (lParam>>16)&0xFFFF;
-
+            mouseX = lParam&0xFFFF;
+            mouseY = (lParam>>16)&0xFFFF;
+            
             draw(pixels, brush, mouseX, mouseY, WIDTH, HEIGHT);
             //pixels[mouseY*WIDTH+mouseX]=PALETTE1;
 
         case WM_PAINT:
-                    
+                
             hdc = GetDC(hwnd);
             HDC memdc = CreateCompatibleDC(hdc);
             HBITMAP hbitmap = CreateCompatibleBitmap(hdc, WIDTH, HEIGHT);
