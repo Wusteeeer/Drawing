@@ -7,6 +7,7 @@
 #include "screen.h"
 #include "brush.h"
 #include "button.h"
+#include "panel.h"
 
 #define WIDTH 800
 #define HEIGHT 600
@@ -17,6 +18,7 @@
 static Screen *sc;
 static Brush *brush;
 static UIButton *exportButton;
+static Panel *testPanel;
 
 static Screen *iconSc;
 static UIButton *iconWindowButton;
@@ -96,6 +98,8 @@ void cleanupEnv(){
     destroyScreen(iconSc);
     destroyBrush(iconBrush);
     destroyButton(iconWindowButton);
+
+    destroyPanel(testPanel);
 }
 
 void initializeEnv(){
@@ -108,6 +112,10 @@ void initializeEnv(){
     iconWindowButton = createButton(WIDTH/2, HEIGHT/2, 100, 100, iconWindowCb, PALETTE2, 1);
     drawButton(iconWindowButton, sc, WIDTH, HEIGHT, 20);
     iconBrush = createBrush(BT_CIRCLE, 10, PALETTE1, 0);
+
+    testPanel = createPanel((WIDTH/2)+200, HEIGHT/2, 100, 100, 20, 1, PALETTE3);
+    flipPanel(testPanel, sc);
+
 }
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -144,7 +152,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     mainHandle = CreateWindow(wndclass.lpszClassName, TEXT("Drawing"), WS_OVERLAPPEDWINDOW, 0,0,WIDTH+15, HEIGHT+15, NULL, NULL, hInstance, NULL);
     ShowWindow(mainHandle, iCmdShow);    
     initializeEnv();
-
     bool running = true;
     int nrIcon = 0;
     while(running){
@@ -178,13 +185,13 @@ static void checkButtons(WPARAM wParam, LPARAM lParam){
     checkButton(iconWindowButton, wParam==MK_LBUTTON, mouseX, mouseY);
 }
 
-static void drawAt(WPARAM wParam, LPARAM lParam, Screen *sc, Brush *br, int width, int height){
+static void drawAt(WPARAM wParam, LPARAM lParam, Screen *sc, Brush *br){
 
     if(wParam != MK_LBUTTON) return;
     int mouseX = lParam&0xFFFF;
     int mouseY = (lParam>>16)&0xFFFF;
     
-    draw(sc, br, mouseX, mouseY, width, height);
+    draw(sc, br, mouseX, mouseY);
             
 }
 
@@ -199,12 +206,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
         case WM_CREATE:
             mainWindowOpen = true;
         return 0;
+        case WM_KEYDOWN:
+        if (wParam == VK_SPACE)
+        {
+            flipPanel(testPanel, sc);
+        }
+        return 0;
         case WM_LBUTTONDOWN:
             checkButtons(wParam, lParam);
-            drawAt(wParam, lParam, sc, brush, WIDTH, HEIGHT);   
+            drawAt(wParam, lParam, sc, brush);   
         return 0;
         case WM_MOUSEMOVE:
-            drawAt(wParam, lParam, sc, brush, WIDTH, HEIGHT);
+            drawAt(wParam, lParam, sc, brush);
         case WM_PAINT:
                 
             hdc = GetDC(hwnd);
@@ -233,10 +246,10 @@ LRESULT CALLBACK IconProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             iconWindowOpen = true;
         return 0;
         case WM_LBUTTONDOWN:
-            drawAt(wParam, lParam, iconSc, iconBrush, ICONWIDTH, ICONHEIGHT);   
+            drawAt(wParam, lParam, iconSc, iconBrush);   
         return 0;
         case WM_MOUSEMOVE:
-            drawAt(wParam, lParam, iconSc, iconBrush, ICONWIDTH, ICONHEIGHT); 
+            drawAt(wParam, lParam, iconSc, iconBrush); 
         case WM_PAINT:
             hdc = GetDC(hwnd);
             HDC memdc = CreateCompatibleDC(hdc);

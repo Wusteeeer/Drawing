@@ -76,13 +76,13 @@ COLOR lerpColor(COLOR c1, COLOR c2, float a){
     return ((int)newBlue)|((int)newGreen<<8)|((int)newRed<<16)|((int)map(a, 0, 1, 0, 255)<<24);
 }
 
-void draw(Screen *sc, Brush *brush, int x, int y, int screenSizeX, int screenSizeY){
+void draw(Screen *sc, Brush *brush, int x, int y){
     
     for(int i = 0; i < brush->brushSize; i++){
         for(int j = 0; j < brush->brushSize; j++){
             int scX = (x-brush->brushSize/2)+j;
             int scY = (y-brush->brushSize/2)+i;
-            if(scX >= screenSizeX || scY >= screenSizeY) continue;
+            if(scX >= getScreenWidth(sc) || scY >= getScreenHeight(sc)) continue;
             if(brush->brushLayout[((i*brush->brushSize)+j)] == TRANSPARENT) continue;
             if(getPixelZOrder(sc, scX, scY) > brush->zOrder) continue;
  

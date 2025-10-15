@@ -21,7 +21,7 @@ void destroyBrush(Brush *brush);
 
 COLOR lerpColor(COLOR c1, COLOR c2, float t);
 
-void draw(Screen *sc, Brush *brush, int x, int y, int screenSizeX, int screenSizeY);
+void draw(Screen *sc, Brush *brush, int x, int y);
 void changeColor(Brush *brush, COLOR newColor);
 
 #ifdef _cplusplus

@@ -16,4 +16,7 @@ U_BYTE getPixelZOrder(Screen *sc, int x, int y);
 void setPixelColor(Screen *sc, int x, int y, COLOR color);
 void setPixelZOrder(Screen *sc, int x,  int y, U_BYTE z);
 
+int getScreenWidth(Screen *sc);
+int getScreenHeight(Screen *sc);
+
 #endif

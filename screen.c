@@ -59,3 +59,11 @@ void setPixelColor(Screen *sc, int x, int y, COLOR color){
 void setPixelZOrder(Screen *sc, int x,  int y, U_BYTE z){
     sc->zOrders[(y*sc->width)+x] = z;
 }
+
+int getScreenWidth(Screen *sc){
+    return sc->width;
+}
+
+int getScreenHeight(Screen *sc){
+    return sc->height;
+}
