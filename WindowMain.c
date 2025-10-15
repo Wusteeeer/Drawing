@@ -4,7 +4,6 @@
 #include "stdint.h" 
 #include "stdbool.h"
 #include "c_util.h"
-#include "icon.h"
 #include "screen.h"
 #include "brush.h"
 #include "button.h"
@@ -12,12 +11,14 @@
 #define WIDTH 800
 #define HEIGHT 600
 
-
+#define ICONWIDTH 320
+#define ICONHEIGHT 320
 
 static Screen *sc;
 static Brush *brush;
 static UIButton *exportButton;
 
+static Screen *iconSc;
 
 /*---------------------------------------
 
@@ -52,7 +53,28 @@ static UIButton *exportButton;
 
 #include "windows.h"
 
+int createWindow(WNDCLASS *wndclass, HWND handle, HINSTANCE hInstance, char *name, int iCmdShow, int height, int width, int x, int y, void *proc){
 
+    wndclass->style = CS_HREDRAW | CS_VREDRAW;
+    wndclass->lpfnWndProc = proc;
+    wndclass->cbClsExtra = 0;
+    wndclass->cbWndExtra = 0;
+    wndclass->hInstance = hInstance;
+    wndclass->hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    wndclass->hCursor = LoadCursor(NULL, IDC_ARROW);
+    wndclass->hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    wndclass->lpszMenuName = NULL;
+    wndclass->lpszClassName = name;
+
+    if(!RegisterClass(wndclass)){
+        MessageBox(NULL, TEXT("This program requires windows NT"), name, MB_ICONERROR);
+        return 0;
+    }
+
+    handle = CreateWindow(name, TEXT("Hello World"), WS_OVERLAPPEDWINDOW, x, y, width+15, height+15, NULL, NULL, hInstance, NULL);
+    ShowWindow(handle, iCmdShow);
+
+}
 
 void exportDrawing(){
     printf("Clicked button!\n");
@@ -62,6 +84,7 @@ void cleanupEnv(){
     destroyBrush(brush);
     destroyButton(exportButton);
     destroyScreen(sc);
+    destroyScreen(iconSc);
 }
 
 void initializeEnv(){
@@ -70,44 +93,24 @@ void initializeEnv(){
     exportButton = createButton(10, 10, WIDTH-20, 20, exportDrawing, BLUE, 1);
     drawButton(exportButton, sc, WIDTH, HEIGHT, 10);
 
+    iconSc = createScreen(ICONWIDTH, ICONHEIGHT, BACKGROUND);
 }
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK IconProc(HWND, UINT, WPARAM, LPARAM);
+
+static bool mainWindowOpen = true, iconWindowOpen = true;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, 
                    PSTR szCmdLine, int iCmdShow)
 {
 
-    static TCHAR szAppName[] = TEXT("Hello");
-    HWND hwnd;
     MSG msg;
+    HWND mainHandle;
     WNDCLASS wndclass;
 
-    #pragma region TEST_CREATE_WINDOW
-    //Create a smaller window where you can draw icons and export
-    /*
-    static TCHAR testName[] = TEXT("Test");
-    HWND testHandle;
-    MSG testMsg;
-    WNDCLASS testClass;
-    testClass.style = CS_HREDRAW | CS_VREDRAW;
-    testClass.lpfnWndProc = testProc;
-    testClass.cbClsExtra = 0;
-    testClass.cbWndExtra = 0;
-    testClass.hInstance = hInstance;
-    testClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-    testClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-    testClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-    testClass.lpszMenuName = NULL;
-    testClass.lpszClassName = testName;
-    if(!RegisterClass(&testClass)){
-        MessageBox(NULL, TEXT("This program requires windows NT"), testName, MB_ICONERROR);
-        return 0;
-    }
-    testHandle = CreateWindow(testName, TEXT("Test"), WS_OVERLAPPEDWINDOW, 0,0, 100, 100, NULL, NULL, hInstance, NULL);
-    ShowWindow(testHandle, iCmdShow);
-    */
-    #pragma endregion
+    HWND iconHandle;
+    WNDCLASS iconclass;
 
     wndclass.style = CS_HREDRAW | CS_VREDRAW;
     wndclass.lpfnWndProc = WndProc;
@@ -118,27 +121,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
     wndclass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
     wndclass.lpszMenuName = NULL;
-    wndclass.lpszClassName = szAppName;
+    wndclass.lpszClassName = "window 1";
 
     if(!RegisterClass(&wndclass)){
-        MessageBox(NULL, TEXT("This program requires windows NT"), szAppName, MB_ICONERROR);
+        MessageBox(NULL, TEXT("This program requires windows NT"), wndclass.lpszClassName, MB_ICONERROR);
         return 0;
     }
 
+    mainHandle = CreateWindow(wndclass.lpszClassName, TEXT("Hello World"), WS_OVERLAPPEDWINDOW, 0,0,WIDTH+15, HEIGHT+15, NULL, NULL, hInstance, NULL);
+    ShowWindow(mainHandle, iCmdShow);    
     initializeEnv();
 
-    hwnd = CreateWindow(szAppName, TEXT("Hello World"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, WIDTH+15, HEIGHT+15, NULL, NULL, hInstance, NULL);
-    ShowWindow(hwnd, iCmdShow);
-    UpdateWindow(hwnd);
-    
+    bool running = true;
+    bool createdWindow = false;
+    while(running){
+        if(GetMessage(&msg, NULL, 0, 0)){
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);        
+        }
 
-    //initializeIconWindow(hInstance, iCmdShow, iconSc);
+        if(!createdWindow){
+            createWindow(&iconclass, iconHandle, hInstance, "icon", iCmdShow, ICONHEIGHT, ICONWIDTH, 0, 0, IconProc);
+            createdWindow = true;
+        }
 
-    while(GetMessage(&msg, NULL, 0, 0)){
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-     
+        if(!mainWindowOpen && !iconWindowOpen){
+            running = false;
+        }
     }
+    
 
     cleanupEnv();
     return msg.wParam;
@@ -193,7 +204,33 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
             DeleteObject(hbitmap);
         return 0;
         case WM_DESTROY:
-        PostQuitMessage(0);
+        mainWindowOpen = false;
+        return 0;
+    }
+    return DefWindowProc(hwnd, message, wParam, lParam);
+}
+
+LRESULT CALLBACK IconProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
+    HDC hdc;
+    switch(message){
+        case WM_CREATE:
+            printf("Created!\n");
+        return 0;
+        case WM_PAINT:
+            hdc = GetDC(hwnd);
+            HDC memdc = CreateCompatibleDC(hdc);
+            HBITMAP hbitmap = CreateCompatibleBitmap(hdc, ICONWIDTH, ICONHEIGHT);
+            SetBitmapBits(hbitmap, ICONWIDTH*ICONHEIGHT*sizeof(uint32_t), getPixels(iconSc));
+            SelectObject(memdc, hbitmap);
+
+            BitBlt(hdc, 0, 0, ICONWIDTH, ICONHEIGHT, memdc, 0, 0, SRCCOPY);
+
+            ReleaseDC(hwnd, hdc);
+            DeleteDC(memdc);
+            DeleteObject(hbitmap);
+        return 0;
+        case WM_DESTROY:
+        iconWindowOpen = false;
         return 0;
     }
     return DefWindowProc(hwnd, message, wParam, lParam);
