@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <pthread.h>
+#include "string.h"
 #include "math.h"
 #include "stdint.h" 
 #include "stdbool.h"
@@ -19,6 +19,8 @@ static Brush *brush;
 static UIButton *exportButton;
 
 static Screen *iconSc;
+static UIButton *iconWindowButton;
+static Brush *iconBrush;
 
 /*---------------------------------------
 
@@ -71,13 +73,20 @@ int createWindow(WNDCLASS *wndclass, HWND handle, HINSTANCE hInstance, char *nam
         return 0;
     }
 
-    handle = CreateWindow(name, TEXT("Hello World"), WS_OVERLAPPEDWINDOW, x, y, width+15, height+15, NULL, NULL, hInstance, NULL);
+    handle = CreateWindow(name, TEXT("Icon Creator"), WS_OVERLAPPEDWINDOW, x, y, width+15, height+15, NULL, NULL, hInstance, NULL);
     ShowWindow(handle, iCmdShow);
 
 }
+static bool mainWindowOpen = false, iconWindowOpen = false;
+static bool createIconWindow = false;
 
 void exportDrawing(){
-    printf("Clicked button!\n");
+}
+
+void iconWindowCb(){
+
+    if(createIconWindow || iconWindowOpen) return;
+    createIconWindow = true;
 }
 
 void cleanupEnv(){
@@ -85,6 +94,8 @@ void cleanupEnv(){
     destroyButton(exportButton);
     destroyScreen(sc);
     destroyScreen(iconSc);
+    destroyBrush(iconBrush);
+    destroyButton(iconWindowButton);
 }
 
 void initializeEnv(){
@@ -94,12 +105,14 @@ void initializeEnv(){
     drawButton(exportButton, sc, WIDTH, HEIGHT, 10);
 
     iconSc = createScreen(ICONWIDTH, ICONHEIGHT, BACKGROUND);
+    iconWindowButton = createButton(WIDTH/2, HEIGHT/2, 100, 100, iconWindowCb, PALETTE2, 1);
+    drawButton(iconWindowButton, sc, WIDTH, HEIGHT, 20);
+    iconBrush = createBrush(BT_CIRCLE, 10, PALETTE1, 0);
 }
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK IconProc(HWND, UINT, WPARAM, LPARAM);
 
-static bool mainWindowOpen = true, iconWindowOpen = true;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, 
                    PSTR szCmdLine, int iCmdShow)
@@ -128,21 +141,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         return 0;
     }
 
-    mainHandle = CreateWindow(wndclass.lpszClassName, TEXT("Hello World"), WS_OVERLAPPEDWINDOW, 0,0,WIDTH+15, HEIGHT+15, NULL, NULL, hInstance, NULL);
+    mainHandle = CreateWindow(wndclass.lpszClassName, TEXT("Drawing"), WS_OVERLAPPEDWINDOW, 0,0,WIDTH+15, HEIGHT+15, NULL, NULL, hInstance, NULL);
     ShowWindow(mainHandle, iCmdShow);    
     initializeEnv();
 
     bool running = true;
-    bool createdWindow = false;
+    int nrIcon = 0;
     while(running){
         if(GetMessage(&msg, NULL, 0, 0)){
             TranslateMessage(&msg);
             DispatchMessage(&msg);        
         }
 
-        if(!createdWindow){
-            createWindow(&iconclass, iconHandle, hInstance, "icon", iCmdShow, ICONHEIGHT, ICONWIDTH, 0, 0, IconProc);
-            createdWindow = true;
+        if(createIconWindow){
+            char name[100];
+            sprintf(name, "icon%d", nrIcon++);
+            createWindow(&iconclass, iconHandle, hInstance, name, iCmdShow, ICONHEIGHT, ICONWIDTH, 0, 0, IconProc);
+            createIconWindow = false;
         }
 
         if(!mainWindowOpen && !iconWindowOpen){
@@ -160,15 +175,16 @@ static void checkButtons(WPARAM wParam, LPARAM lParam){
     int mouseY = (lParam>>16)&0xFFFF;
             
     checkButton(exportButton, wParam == MK_LBUTTON, mouseX, mouseY);
+    checkButton(iconWindowButton, wParam==MK_LBUTTON, mouseX, mouseY);
 }
 
-static void drawAt(WPARAM wParam, LPARAM lParam){
+static void drawAt(WPARAM wParam, LPARAM lParam, Screen *sc, Brush *br, int width, int height){
 
     if(wParam != MK_LBUTTON) return;
     int mouseX = lParam&0xFFFF;
     int mouseY = (lParam>>16)&0xFFFF;
     
-    draw(sc, brush, mouseX, mouseY, WIDTH, HEIGHT);
+    draw(sc, br, mouseX, mouseY, width, height);
             
 }
 
@@ -181,14 +197,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
 
     switch(message){
         case WM_CREATE:
-            printf("Created!\n");
+            mainWindowOpen = true;
         return 0;
         case WM_LBUTTONDOWN:
             checkButtons(wParam, lParam);
-            drawAt(wParam, lParam);   
+            drawAt(wParam, lParam, sc, brush, WIDTH, HEIGHT);   
         return 0;
         case WM_MOUSEMOVE:
-            drawAt(wParam, lParam);
+            drawAt(wParam, lParam, sc, brush, WIDTH, HEIGHT);
         case WM_PAINT:
                 
             hdc = GetDC(hwnd);
@@ -214,8 +230,13 @@ LRESULT CALLBACK IconProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     HDC hdc;
     switch(message){
         case WM_CREATE:
-            printf("Created!\n");
+            iconWindowOpen = true;
         return 0;
+        case WM_LBUTTONDOWN:
+            drawAt(wParam, lParam, iconSc, iconBrush, ICONWIDTH, ICONHEIGHT);   
+        return 0;
+        case WM_MOUSEMOVE:
+            drawAt(wParam, lParam, iconSc, iconBrush, ICONWIDTH, ICONHEIGHT); 
         case WM_PAINT:
             hdc = GetDC(hwnd);
             HDC memdc = CreateCompatibleDC(hdc);
