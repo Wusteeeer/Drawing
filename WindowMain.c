@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <pthread.h>
 #include "math.h"
 #include "stdint.h" 
 #include "stdbool.h"
 #include "c_util.h"
+#include "icon.h"
 #include "screen.h"
 #include "brush.h"
 #include "button.h"
@@ -10,14 +12,16 @@
 #define WIDTH 800
 #define HEIGHT 600
 
-#define PIXELCOLS 32
-#define PIXELROWS 32
 
 
 static Screen *sc;
 static Brush *brush;
 static UIButton *exportButton;
+static UIButton *iconCreatorButton;
  
+static Screen *iconSc;
+static pthread_t iconThread;
+
 /*---------------------------------------
 
     Pallette from lospec 
@@ -51,14 +55,33 @@ static UIButton *exportButton;
 
 #include "windows.h"
 
+void initializeIconWindow(HINSTANCE hInstance, int iCmdShow){
+    printf("Trying to start icon thread!\n");
+    pthread_create(&iconThread, NULL, createIconWindow(hInstance, iCmdShow, iconSc), NULL);
+}
+
+void closeIconWindow(){
+    closeWindow();
+}
+
+void openIconWindow(){
+    openWindow();
+}
+
+
+
 void exportDrawing(){
     printf("Clicked button!\n");
+    closeIconWindow();
 }
 
 void cleanupEnv(){
     destroyBrush(brush);
     destroyButton(exportButton);
     destroyScreen(sc);
+    destroyButton(iconCreatorButton);
+
+    destroyScreen(iconSc);
 }
 
 void initializeEnv(){
@@ -66,6 +89,8 @@ void initializeEnv(){
     brush = createBrush(BT_CIRCLE, 50, PALETTE1, 0);
     exportButton = createButton(10, 10, WIDTH-20, 20, exportDrawing, BLUE, 1);
     drawButton(exportButton, sc, WIDTH, HEIGHT, 10);
+
+    iconSc = createScreen(ICONWIDTH, ICONHEIGHT, BACKGROUND);
 }
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -78,6 +103,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     HWND hwnd;
     MSG msg;
     WNDCLASS wndclass;
+
+    #pragma region TEST_CREATE_WINDOW
+    //Create a smaller window where you can draw icons and export
+    /*
+    static TCHAR testName[] = TEXT("Test");
+    HWND testHandle;
+    MSG testMsg;
+    WNDCLASS testClass;
+    testClass.style = CS_HREDRAW | CS_VREDRAW;
+    testClass.lpfnWndProc = testProc;
+    testClass.cbClsExtra = 0;
+    testClass.cbWndExtra = 0;
+    testClass.hInstance = hInstance;
+    testClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    testClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+    testClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    testClass.lpszMenuName = NULL;
+    testClass.lpszClassName = testName;
+    if(!RegisterClass(&testClass)){
+        MessageBox(NULL, TEXT("This program requires windows NT"), testName, MB_ICONERROR);
+        return 0;
+    }
+    testHandle = CreateWindow(testName, TEXT("Test"), WS_OVERLAPPEDWINDOW, 0,0, 100, 100, NULL, NULL, hInstance, NULL);
+    ShowWindow(testHandle, iCmdShow);
+    */
+    #pragma endregion
 
     wndclass.style = CS_HREDRAW | CS_VREDRAW;
     wndclass.lpfnWndProc = WndProc;
@@ -100,17 +151,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     hwnd = CreateWindow(szAppName, TEXT("Hello World"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, WIDTH+15, HEIGHT+15, NULL, NULL, hInstance, NULL);
     ShowWindow(hwnd, iCmdShow);
     UpdateWindow(hwnd);
-
-
-
+    
+    iconCreatorButton = createButton(WIDTH/2, HEIGHT/2, 100, 100, openIconWindow, PALETTE2, 1);
+    initializeIconWindow(hInstance, iCmdShow);
+    drawButton(iconCreatorButton, sc, WIDTH, HEIGHT, 10);
+    
     while(GetMessage(&msg, NULL, 0, 0)){
     
-
         TranslateMessage(&msg);
         DispatchMessage(&msg);
      
     }
 
+    closeWindow();
+    pthread_join(iconThread, NULL);
     cleanupEnv();
     return msg.wParam;
 }
@@ -120,6 +174,7 @@ static void checkButtons(WPARAM wParam, LPARAM lParam){
     int mouseY = (lParam>>16)&0xFFFF;
             
     checkButton(exportButton, wParam == MK_LBUTTON, mouseX, mouseY);
+    checkButton(iconCreatorButton, wParam==MK_LBUTTON, mouseX, mouseY);
 }
 
 static void drawAt(WPARAM wParam, LPARAM lParam){
@@ -131,6 +186,7 @@ static void drawAt(WPARAM wParam, LPARAM lParam){
     draw(sc, brush, mouseX, mouseY, WIDTH, HEIGHT);
             
 }
+
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
     HDC hdc;

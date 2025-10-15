@@ -30,7 +30,22 @@ void drawButton(UIButton *btn, Screen *sc, int screenWidth, int screenHeight, in
         if(btn->y + h > screenHeight) continue;
         for(int w = 0; w < btn->width; w++){
             if(btn->x+w > screenWidth) continue;
-                        
+            
+            /*
+                Checks distance from center at sides of button for example if the corner radius is 5:
+                . . . . .             . .    
+                . . . . .             . . .  
+                . . . . .             . . . . 
+                * . . . .  -------->  * . . . 
+                . . . . .             . . . . 
+                . . . . .             . . .  
+                . . . . .             . .   
+
+                '.' represents pixels and '*' represents the chosen pixel.
+                The algorithm checks the distance from * to all . on the edge and if
+                they fall within the distance of half the height of the button then
+                they are filled in otherwise we skip them.
+            */
             if(btn->x+w >= btn->x+btn->width-cornerRadius || btn->x+w <= cornerRadius+btn->x){
                 int xPos = btn->x+w <= cornerRadius+btn->x ? (cornerRadius+btn->x) : (btn->x+btn->width-cornerRadius);
                 int yPos = (btn->height/2)+btn->y;
