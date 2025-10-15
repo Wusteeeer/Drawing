@@ -16,6 +16,7 @@ extern "C" {
 void *createIconWindow(HINSTANCE hInstance, int iCmdShow, Screen *iSc);
 void closeWindow();
 void openWindow();
+void terminateWindow();
 
 #elif unix
 

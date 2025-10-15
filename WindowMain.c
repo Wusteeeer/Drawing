@@ -17,10 +17,7 @@
 static Screen *sc;
 static Brush *brush;
 static UIButton *exportButton;
-static UIButton *iconCreatorButton;
- 
-static Screen *iconSc;
-static pthread_t iconThread;
+
 
 /*---------------------------------------
 
@@ -55,33 +52,16 @@ static pthread_t iconThread;
 
 #include "windows.h"
 
-void initializeIconWindow(HINSTANCE hInstance, int iCmdShow){
-    printf("Trying to start icon thread!\n");
-    pthread_create(&iconThread, NULL, createIconWindow(hInstance, iCmdShow, iconSc), NULL);
-}
-
-void closeIconWindow(){
-    closeWindow();
-}
-
-void openIconWindow(){
-    openWindow();
-}
-
 
 
 void exportDrawing(){
     printf("Clicked button!\n");
-    closeIconWindow();
 }
 
 void cleanupEnv(){
     destroyBrush(brush);
     destroyButton(exportButton);
     destroyScreen(sc);
-    destroyButton(iconCreatorButton);
-
-    destroyScreen(iconSc);
 }
 
 void initializeEnv(){
@@ -90,7 +70,6 @@ void initializeEnv(){
     exportButton = createButton(10, 10, WIDTH-20, 20, exportDrawing, BLUE, 1);
     drawButton(exportButton, sc, WIDTH, HEIGHT, 10);
 
-    iconSc = createScreen(ICONWIDTH, ICONHEIGHT, BACKGROUND);
 }
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -152,19 +131,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     ShowWindow(hwnd, iCmdShow);
     UpdateWindow(hwnd);
     
-    iconCreatorButton = createButton(WIDTH/2, HEIGHT/2, 100, 100, openIconWindow, PALETTE2, 1);
-    initializeIconWindow(hInstance, iCmdShow);
-    drawButton(iconCreatorButton, sc, WIDTH, HEIGHT, 10);
-    
+
+    //initializeIconWindow(hInstance, iCmdShow, iconSc);
+
     while(GetMessage(&msg, NULL, 0, 0)){
-    
         TranslateMessage(&msg);
         DispatchMessage(&msg);
      
     }
 
-    closeWindow();
-    pthread_join(iconThread, NULL);
     cleanupEnv();
     return msg.wParam;
 }
@@ -174,7 +149,6 @@ static void checkButtons(WPARAM wParam, LPARAM lParam){
     int mouseY = (lParam>>16)&0xFFFF;
             
     checkButton(exportButton, wParam == MK_LBUTTON, mouseX, mouseY);
-    checkButton(iconCreatorButton, wParam==MK_LBUTTON, mouseX, mouseY);
 }
 
 static void drawAt(WPARAM wParam, LPARAM lParam){
