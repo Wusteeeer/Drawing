@@ -4,6 +4,7 @@
 #include "stdint.h" 
 #include "stdbool.h"
 #include "c_util.h"
+#include "vector.h"
 #include "screen.h"
 #include "brush.h"
 #include "button.h"
@@ -23,6 +24,8 @@ static Panel *testPanel;
 static Screen *iconSc;
 static UIButton *iconWindowButton;
 static Brush *iconBrush;
+
+static Vector *previousMouse, *currentMouse;
 
 /*---------------------------------------
 
@@ -98,6 +101,8 @@ void cleanupEnv(){
     destroyScreen(iconSc);
     destroyBrush(iconBrush);
     destroyButton(iconWindowButton);
+    destroyVector(previousMouse);
+    destroyVector(currentMouse);
 
     destroyPanel(testPanel);
 }
@@ -112,6 +117,9 @@ void initializeEnv(){
     iconWindowButton = createButton(WIDTH/2, HEIGHT/2, 100, 100, iconWindowCb, PALETTE2, 1);
     drawButton(iconWindowButton, sc, WIDTH, HEIGHT, 20);
     iconBrush = createBrush(BT_CIRCLE, 10, PALETTE1, 0);
+
+    previousMouse = createVector(2, V2(0,0));
+    currentMouse = createVector(2, V2(0,0));
 
     testPanel = createPanel((WIDTH/2)+200, HEIGHT/2, 100, 100, 20, 1, PALETTE3);
     flipPanel(testPanel, sc);
@@ -191,8 +199,27 @@ static void drawAt(WPARAM wParam, LPARAM lParam, Screen *sc, Brush *br){
     int mouseX = lParam&0xFFFF;
     int mouseY = (lParam>>16)&0xFFFF;
     
-    draw(sc, br, mouseX, mouseY);
-            
+    printVector(previousMouse);
+    printVector(currentMouse);
+    printf("\n\n");
+
+    //TODO: Create vector from previous to current and iterate from previous along the new vector
+    //      to the current?
+    
+    // float minX = min(getX(previousMouse), getX(currentMouse));
+    // float maxX = max(getX(previousMouse), getX(currentMouse));
+    // float minY = min(getY(previousMouse), getY(currentMouse));
+    // float maxY = max(getY(previousMouse), getY(currentMouse));
+    // for(int y = minY; y <= maxY; y+=5){
+    //     for(int x = minX; x <= maxX; x+=5){
+    //     }
+    // }
+
+    setValues(currentMouse, V2(getX(previousMouse), getY(previousMouse)));
+    
+    draw(sc, br, mouseX, mouseY);   
+
+    setValues(previousMouse, V2(mouseX, mouseY));
 }
 
 
@@ -213,6 +240,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
         }
         return 0;
         case WM_LBUTTONDOWN:
+            setValues(previousMouse, V2(lParam&0xFFFF, (lParam>>16)&0xFFFF));
+            setValues(currentMouse, V2(lParam&0xFFFF, (lParam>>16)&0xFFFF));
+
             checkButtons(wParam, lParam);
             drawAt(wParam, lParam, sc, brush);   
         return 0;
