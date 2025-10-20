@@ -25,6 +25,11 @@ float getW(Vector *v);
 float getValue(Vector *v, int index);
 float vectorMag(Vector *v);
 
+void addX(Vector *v, float add);
+void addY(Vector *v, float add);
+void addZ(Vector *v, float add);
+
+
 void setValues(Vector *v, float *vals);
 
 Vector *addVector(Vector *v1, Vector *v2);
@@ -34,6 +39,7 @@ Vector *crossProduct(Vector *v1, Vector *v2);
 Vector *scaleVector(Vector *v, float scalar);
 Vector *scaleDownVector(Vector *v, float scalar);
 Vector *projectVector(Vector *v1, Vector *v2);
-Vector *normalizeVector(Vector *v1);
+float distance(Vector *v1, Vector *v2);
+void normalizeVector(Vector *v);
 
 #endif //VECTOR_H

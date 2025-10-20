@@ -69,6 +69,22 @@ float vectorMag(Vector *v){
     return v->magnitude;
 }
 
+void addX(Vector *v, float add){
+    if(v->size == 0) return;
+    v->values[0] += add;
+}
+
+void addY(Vector *v, float add){
+    if(v->size <= 1) return;
+    v->values[1] += add;
+}
+
+void addZ(Vector *v, float add){
+    if(v->size <= 2) return;
+    v->values[2] += add;
+}
+
+
 void setValues(Vector *v, float *vals){
     if(sizeof(vals)/sizeof(float) < v->size) return;
 
@@ -80,11 +96,36 @@ void setValues(Vector *v, float *vals){
     v->magnitude = sqrt(acc);
 }
 
-Vector *addVector(Vector *v1, Vector *v2);
-Vector *subtractVector(Vector *v1, Vector *v2);
+float distance(Vector *v1, Vector *v2){
+    return sqrt(((getX(v2)-getX(v1))*(getX(v2)-getX(v1)))+((getY(v2)-getY(v1))*(getY(v2)-getY(v1))));
+}
+
+Vector *addVector(Vector *v1, Vector *v2){
+    float values[v1->size];
+    for(int i = 0; i < v1->size; i++){
+        values[i] = v1->values[i]+v2->values[i];
+    }
+    return createVector(v1->size, values);
+}
+
+Vector *subtractVector(Vector *v1, Vector *v2){
+    float values[v1->size];
+    for(int i = 0; i < v1->size; i++){
+        values[i] = v1->values[i]-v2->values[i];
+    }
+    return createVector(v1->size, values);
+}
+
 Vector *dotProduct(Vector *v1, Vector *v2);
 Vector *crossProduct(Vector *v1, Vector *v2);
 Vector *scaleVector(Vector *v, float scalar);
 Vector *scaleDownVector(Vector *v, float scalar);
 Vector *projectVector(Vector *v1, Vector *v2);
-Vector *normalizeVector(Vector *v1);
+
+void normalizeVector(Vector *v){
+    if(v->magnitude == 0) return;
+    for(int i = 0; i < v->size; i++){
+        v->values[i] = v->values[i]/v->magnitude;
+    }
+    v->magnitude = 1.0f;
+}

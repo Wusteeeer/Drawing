@@ -109,7 +109,7 @@ void cleanupEnv(){
 
 void initializeEnv(){
     sc = createScreen(WIDTH, HEIGHT, BACKGROUND);
-    brush = createBrush(BT_CIRCLE, 50, PALETTE1, 0);
+    brush = createBrush(BT_CIRCLE, 20, PALETTE1, 0);
     exportButton = createButton(10, 10, WIDTH-20, 20, exportDrawing, BLUE, 1);
     drawButton(exportButton, sc, WIDTH, HEIGHT, 10);
 
@@ -198,27 +198,20 @@ static void drawAt(WPARAM wParam, LPARAM lParam, Screen *sc, Brush *br){
     if(wParam != MK_LBUTTON) return;
     int mouseX = lParam&0xFFFF;
     int mouseY = (lParam>>16)&0xFFFF;
-    
-    printVector(previousMouse);
-    printVector(currentMouse);
-    printf("\n\n");
 
-    //TODO: Create vector from previous to current and iterate from previous along the new vector
-    //      to the current?
+    Vector *dir = subtractVector(currentMouse, previousMouse);
+    normalizeVector(dir);
+    Vector *mouseVector = createVector(2, V2(getX(previousMouse), getY(previousMouse)));
+   
+    while(distance(mouseVector, currentMouse)>=1.0f){
+        draw(sc, br, getX(mouseVector), getY(mouseVector));
+        addX(mouseVector, getX(dir));
+        addY(mouseVector, getY(dir));   
+    }
+    destroyVector(dir);
+    destroyVector(mouseVector);
     
-    // float minX = min(getX(previousMouse), getX(currentMouse));
-    // float maxX = max(getX(previousMouse), getX(currentMouse));
-    // float minY = min(getY(previousMouse), getY(currentMouse));
-    // float maxY = max(getY(previousMouse), getY(currentMouse));
-    // for(int y = minY; y <= maxY; y+=5){
-    //     for(int x = minX; x <= maxX; x+=5){
-    //     }
-    // }
-
     setValues(currentMouse, V2(getX(previousMouse), getY(previousMouse)));
-    
-    draw(sc, br, mouseX, mouseY);   
-
     setValues(previousMouse, V2(mouseX, mouseY));
 }
 
@@ -241,7 +234,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
         return 0;
         case WM_LBUTTONDOWN:
             setValues(previousMouse, V2(lParam&0xFFFF, (lParam>>16)&0xFFFF));
-            setValues(currentMouse, V2(lParam&0xFFFF, (lParam>>16)&0xFFFF));
+            //Add 1 pixel so the distance is great enough to draw this pixel offset is fixed when you the actually draw
+            setValues(currentMouse, V2((lParam&0xFFFF)+1, ((lParam>>16)&0xFFFF)+1));
 
             checkButtons(wParam, lParam);
             drawAt(wParam, lParam, sc, brush);   
@@ -276,6 +270,9 @@ LRESULT CALLBACK IconProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             iconWindowOpen = true;
         return 0;
         case WM_LBUTTONDOWN:
+            setValues(previousMouse, V2(lParam&0xFFFF, (lParam>>16)&0xFFFF));
+            //Add 1 pixel so the distance is great enough to draw this pixel offset is fixed when you the actually draw
+            setValues(currentMouse, V2((lParam&0xFFFF)+1, ((lParam>>16)&0xFFFF)+1));
             drawAt(wParam, lParam, iconSc, iconBrush);   
         return 0;
         case WM_MOUSEMOVE:
