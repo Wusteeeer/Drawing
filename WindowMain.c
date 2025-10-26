@@ -9,6 +9,7 @@
 #include "brush.h"
 #include "button.h"
 #include "panel.h"
+#include "dshape.h"
 
 #define WIDTH 800
 #define HEIGHT 600
@@ -130,6 +131,24 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK IconProc(HWND, UINT, WPARAM, LPARAM);
 
 
+double testFunc1(double val){
+    //x(t) = (a + b) cost − b cos((a/b + 1)t)
+    float a = 143.6f;
+    float b = 31.25f;
+    float ab = a + b;
+    float aOb = (a/b)+1;
+    return (((ab)*cos(val))-(b*cos(aOb*val)))+WIDTH/2;
+}
+
+double testFunc2(double val){
+    //y(t) = (a + b)sin t − b sin((a/b + 1)t)
+    float a = 143.6f;
+    float b = 31.25f;
+    float ab = a + b;
+    float aOb = (a/b)+1;
+    return ((ab)*sin(val))-(b*sin(aOb*val))+HEIGHT/2;
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, 
                    PSTR szCmdLine, int iCmdShow)
 {
@@ -160,6 +179,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     mainHandle = CreateWindow(wndclass.lpszClassName, TEXT("Drawing"), WS_OVERLAPPEDWINDOW, 0,0,WIDTH+15, HEIGHT+15, NULL, NULL, hInstance, NULL);
     ShowWindow(mainHandle, iCmdShow);    
     initializeEnv();
+
+    Vector *v1 = createVector(2, V2(100, 200));
+    Vector *v2 = createVector(2, V2(300, 300));
+    draw_rectangle(sc, v1, v2, 5, ARGB(255, 255, 0, 0), 0);
+    destroyVector(v1);
+    destroyVector(v2);
+
+    Brush *testBrush = createBrush(BT_CIRCLE, 5, ARGB(255, 100, 100, 150), 2);
+    draw_p_curve_2D(sc, testFunc1, testFunc2, 0, PI*16, testBrush, 0.01f, true);
+    destroyBrush(testBrush);
+
     bool running = true;
     int nrIcon = 0;
     while(running){
@@ -199,18 +229,8 @@ static void drawAt(WPARAM wParam, LPARAM lParam, Screen *sc, Brush *br){
     int mouseX = lParam&0xFFFF;
     int mouseY = (lParam>>16)&0xFFFF;
 
-    Vector *dir = subtractVector(currentMouse, previousMouse);
-    normalizeVector(dir);
-    Vector *mouseVector = createVector(2, V2(getX(previousMouse), getY(previousMouse)));
-   
-    while(distance(mouseVector, currentMouse)>=1.0f){
-        draw(sc, br, getX(mouseVector), getY(mouseVector));
-        addX(mouseVector, getX(dir));
-        addY(mouseVector, getY(dir));   
-    }
-    destroyVector(dir);
-    destroyVector(mouseVector);
-    
+    draw_line_2D(sc, brush, currentMouse, previousMouse);
+
     setValues(currentMouse, V2(getX(previousMouse), getY(previousMouse)));
     setValues(previousMouse, V2(mouseX, mouseY));
 }

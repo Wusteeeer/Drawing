@@ -29,6 +29,8 @@ void addX(Vector *v, float add);
 void addY(Vector *v, float add);
 void addZ(Vector *v, float add);
 
+/*@brief v1.mag > v2.mag ? >0 : <0 ; v1.mag == v2.mag => 0*/
+int compareTo_vector(Vector *v1, Vector *v2);
 
 void setValues(Vector *v, float *vals);
 

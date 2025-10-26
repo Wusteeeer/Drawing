@@ -84,6 +84,10 @@ void addZ(Vector *v, float add){
     v->values[2] += add;
 }
 
+int compareTo_vector(Vector *v1, Vector *v2){
+    return v1->magnitude - v2->magnitude;
+}
+
 
 void setValues(Vector *v, float *vals){
     if(sizeof(vals)/sizeof(float) < v->size) return;
