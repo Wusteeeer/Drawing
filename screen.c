@@ -7,16 +7,20 @@
 typedef struct screen{
     int width;
     int height;
+    int xOffset;
+    int yOffset;
     U_BYTE *zOrders;
     COLOR *pixels;
 }Screen;
 
-Screen *createScreen(int width, int height, COLOR bg){
+Screen *createScreen(int width, int height, COLOR bg, int xOffset, int yOffset){
     Screen *sc = malloc(sizeof(Screen));
     sc->pixels = malloc(sizeof(COLOR)*width*height);
     sc->zOrders = malloc(sizeof(U_BYTE)*width*height);
     sc->width = width;
     sc->height = height;
+    sc->xOffset = xOffset;
+    sc->yOffset = yOffset;
     fillScreen(sc, bg);
     for(int y = 0; y < height; y++){
         for(int x = 0; x < width; x++){
@@ -75,4 +79,13 @@ int getScreenWidth(Screen *sc){
 
 int getScreenHeight(Screen *sc){
     return sc->height;
+}
+
+
+int getXOffset(Screen *sc){
+    return sc->xOffset;
+}
+
+int getYOffset(Screen *sc){
+    return sc->yOffset;
 }

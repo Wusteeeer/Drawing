@@ -19,12 +19,12 @@
 
 static Screen *sc;
 static Brush *brush;
-static UIButton *exportButton;
-static Panel *testPanel;
 
 static Screen *iconSc;
 static UIButton *iconWindowButton;
 static Brush *iconBrush;
+
+static Panel *sidePanel, *topPanel;
 
 static Vector *previousMouse, *currentMouse;
 
@@ -86,9 +86,6 @@ int createWindow(WNDCLASS *wndclass, HWND handle, HINSTANCE hInstance, char *nam
 static bool mainWindowOpen = false, iconWindowOpen = false;
 static bool createIconWindow = false;
 
-void exportDrawing(){
-}
-
 void iconWindowCb(){
 
     if(createIconWindow || iconWindowOpen) return;
@@ -97,33 +94,33 @@ void iconWindowCb(){
 
 void cleanupEnv(){
     destroyBrush(brush);
-    destroyButton(exportButton);
     destroyScreen(sc);
     destroyScreen(iconSc);
     destroyBrush(iconBrush);
     destroyButton(iconWindowButton);
     destroyVector(previousMouse);
     destroyVector(currentMouse);
-
-    destroyPanel(testPanel);
+    destroyPanel(topPanel);
+    destroyPanel(sidePanel);
 }
 
 void initializeEnv(){
-    sc = createScreen(WIDTH, HEIGHT, BACKGROUND);
+    sc = createScreen(WIDTH, HEIGHT, BACKGROUND, 0, 0);
     brush = createBrush(BT_CIRCLE, 20, PALETTE1, 0);
-    exportButton = createButton(10, 10, WIDTH-20, 20, exportDrawing, BLUE, 1);
-    drawButton(exportButton, sc, WIDTH, HEIGHT, 10);
+    
+    topPanel = createPanel(10,10,WIDTH-20, 50, 40, 1, BACKGROUND+ARGB(0,10,10,10), 50, 1, 45);
+    flipPanel(topPanel, sc);
 
-    iconSc = createScreen(ICONWIDTH, ICONHEIGHT, BACKGROUND);
+    sidePanel = createPanel(10,60, 20, HEIGHT-120, 40, 1, BACKGROUND+ARGB(0,10,10,10), 50, 45, 1);
+    flipPanel(sidePanel, sc);
+
+    iconSc = createScreen(ICONWIDTH, ICONHEIGHT, BACKGROUND, 0, 0);
     iconWindowButton = createButton(WIDTH/2, HEIGHT/2, 100, 100, iconWindowCb, PALETTE2, 1);
     drawButton(iconWindowButton, sc, WIDTH, HEIGHT, 20);
     iconBrush = createBrush(BT_CIRCLE, 10, PALETTE1, 0);
 
     previousMouse = createVector(2, V2(0,0));
     currentMouse = createVector(2, V2(0,0));
-
-    testPanel = createPanel((WIDTH/2)+200, HEIGHT/2, 100, 100, 20, 1, PALETTE3);
-    flipPanel(testPanel, sc);
 
 }
 
@@ -186,8 +183,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     destroyVector(v1);
     destroyVector(v2);
 
-    Brush *testBrush = createBrush(BT_CIRCLE, 5, ARGB(255, 100, 100, 150), 2);
-    draw_p_curve_2D(sc, testFunc1, testFunc2, 0, PI*16, testBrush, 0.01f, true);
+    Brush *testBrush = createBrush(BT_CIRCLE, 10, ARGB(255, 100, 100, 150), 2);
+    draw_p_curve_2D(sc, testFunc1, testFunc2, 0, PI*8, testBrush, 0.01f, true);
     destroyBrush(testBrush);
 
     bool running = true;
@@ -218,16 +215,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 static void checkButtons(WPARAM wParam, LPARAM lParam){
     int mouseX = lParam&0xFFFF;
     int mouseY = (lParam>>16)&0xFFFF;
-            
-    checkButton(exportButton, wParam == MK_LBUTTON, mouseX, mouseY);
     checkButton(iconWindowButton, wParam==MK_LBUTTON, mouseX, mouseY);
 }
 
 static void drawAt(WPARAM wParam, LPARAM lParam, Screen *sc, Brush *br){
 
     if(wParam != MK_LBUTTON) return;
-    int mouseX = lParam&0xFFFF;
-    int mouseY = (lParam>>16)&0xFFFF;
+    int mouseX = (lParam&0xFFFF)-getXOffset(sc);
+    int mouseY = ((lParam>>16)&0xFFFF)-getYOffset(sc);
 
     draw_line_2D(sc, brush, currentMouse, previousMouse);
 
@@ -245,12 +240,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
     switch(message){
         case WM_CREATE:
             mainWindowOpen = true;
-        return 0;
-        case WM_KEYDOWN:
-        if (wParam == VK_SPACE)
-        {
-            flipPanel(testPanel, sc);
-        }
         return 0;
         case WM_LBUTTONDOWN:
             setValues(previousMouse, V2(lParam&0xFFFF, (lParam>>16)&0xFFFF));
@@ -270,7 +259,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
             SetBitmapBits(hbitmap, WIDTH*HEIGHT*sizeof(uint32_t), getPixels(sc));
             SelectObject(memdc, hbitmap);
 
-            BitBlt(hdc, 0, 0, WIDTH, HEIGHT, memdc, 0, 0, SRCCOPY);
+            BitBlt(hdc, getXOffset(sc), getYOffset(sc), WIDTH, HEIGHT, memdc, 0, 0, SRCCOPY);
 
             ReleaseDC(hwnd, hdc);
             DeleteDC(memdc);
@@ -304,7 +293,7 @@ LRESULT CALLBACK IconProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             SetBitmapBits(hbitmap, ICONWIDTH*ICONHEIGHT*sizeof(uint32_t), getPixels(iconSc));
             SelectObject(memdc, hbitmap);
 
-            BitBlt(hdc, 0, 0, ICONWIDTH, ICONHEIGHT, memdc, 0, 0, SRCCOPY);
+            BitBlt(hdc, getXOffset(iconSc), getYOffset(iconSc), ICONWIDTH, ICONHEIGHT, memdc, 0, 0, SRCCOPY);
 
             ReleaseDC(hwnd, hdc);
             DeleteDC(memdc);

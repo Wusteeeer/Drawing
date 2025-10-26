@@ -5,7 +5,7 @@
 
 typedef struct screen Screen;
 
-Screen *createScreen(int width, int height, COLOR bg);
+Screen *createScreen(int width, int height, COLOR bg, int xOffset, int yOffset);
 void destroyScreen(Screen *sc);
 
 void fillScreen(Screen *sc, COLOR color);
@@ -18,5 +18,8 @@ void setPixelZOrder(Screen *sc, int x,  int y, U_BYTE z);
 
 int getScreenWidth(Screen *sc);
 int getScreenHeight(Screen *sc);
+
+int getXOffset(Screen *sc);
+int getYOffset(Screen *sc);
 
 #endif

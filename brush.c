@@ -66,7 +66,7 @@ static float lerp(float v0, float v1, float t) {
 
 static float map(long x, long in_min, long in_max, long out_min, long out_max)
 {
-  return (float)((x - in_min) * (out_max - out_min)) / (float)((in_max - in_min) + out_min);
+   return (float)((x - in_min) * (out_max - out_min)) / (float)((in_max - in_min) + out_min);
 }
 
 COLOR lerpColor(COLOR c1, COLOR c2, float a){
@@ -93,6 +93,7 @@ void draw(Screen *sc, Brush *brush, int x, int y){
             float mappedAlpha = map(alpha, 0, 255, 0, 1);
             
             setPixelColor(sc, scX, scY, alpha != 255 ? lerpColor(screenColor, brushColor, mappedAlpha) : brushColor);
+            setPixelZOrder(sc, scX, scY, brush->zOrder);
         }
     }
 

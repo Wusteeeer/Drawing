@@ -37,6 +37,10 @@ typedef unsigned long COLOR;
 /*@brief Background color*/
 #define BACKGROUND (COLOR)0xFF202020
 
+#define PRINT_COLOR(color) \
+    printf("ARGB: (%d, %d, %d, %d)\n", ALPHACHANNEL(color), REDCHANNEL(color), GREENCHANNEL(color), BLUECHANNEL(color))
+
+
 /*@brief White color*/
 #define WHITE (COLOR)0xFFFFFFFF
 
