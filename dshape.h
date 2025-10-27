@@ -36,4 +36,7 @@ void draw_line_2D(Screen *sc, Brush *br, Vector *p1, Vector *p2);
 void draw_p_curve_2D(Screen *sc, double (*ht)(double), double (*gt)(double), double start, double end, Brush *br, float precision, bool closed);
 
 
+/**/
+bool falls_within_rounded_corner(Vector *p, Vector *c1, Vector *c2, int cornerRadius);
+
 #endif //DHSAPE_H

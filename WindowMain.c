@@ -108,10 +108,10 @@ void initializeEnv(){
     sc = createScreen(WIDTH, HEIGHT, BACKGROUND, 0, 0);
     brush = createBrush(BT_CIRCLE, 20, PALETTE1, 0);
     
-    topPanel = createPanel(10,10,WIDTH-20, 50, 40, 1, BACKGROUND+ARGB(0,10,10,10), 50, 1, 45);
+    topPanel = createPanel(10,10,WIDTH-20, 50, 40, 1, BACKGROUND+ARGB(0,10,10,10), 50, 3, 45);
     flipPanel(topPanel, sc);
 
-    sidePanel = createPanel(10,60, 20, HEIGHT-120, 40, 1, BACKGROUND+ARGB(0,10,10,10), 50, 45, 1);
+    sidePanel = createPanel(10,60, 20, HEIGHT-120, 40, 1, BACKGROUND+ARGB(0,10,10,10), 20, 15,2);
     flipPanel(sidePanel, sc);
 
     iconSc = createScreen(ICONWIDTH, ICONHEIGHT, BACKGROUND, 0, 0);
